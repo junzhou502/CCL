@@ -337,7 +337,7 @@ static void ccl_tracer_corr_legendre(ccl_cosmology *cosmo,
     //Interpolate input Cl into
     cl_spl=ccl_f1d_t_new(n_ell,ell,cls,cls[0],0,
 			 ccl_f1d_extrap_const,
-			 ccl_f1d_extrap_logx_logy, status);
+			 ccl_f1d_extrap_logx_liny, status);
     if(cl_spl==NULL) {
       *status=CCL_ERROR_MEMORY;
       ccl_cosmology_set_status_message(cosmo,
