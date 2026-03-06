@@ -285,8 +285,8 @@ static void ccl_compute_legendre_polynomial(int corr_type,double theta,int ell_m
       Pl_theta[j]*=(2*j+1);
   }
   else if(corr_type==CCL_CORR_GL) {
+    gsl_sf_legendre_Plm_array(ell_max, 2, cth, &(Pl_theta[2]));
     for (j=2;j<=ell_max;j++) {//https://arxiv.org/pdf/1007.4809.pdf
-      Pl_theta[j]=gsl_sf_legendre_Plm(j,2,cth);
       Pl_theta[j]*=(2*j+1.)/((j+0.)*(j+1.));
     }
   }
