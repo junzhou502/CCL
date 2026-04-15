@@ -1,4 +1,4 @@
-__all__ = ("CorrelationMethods", "CorrelationTypes", "correlation",
+__all__ = ("CorrelationMethods", "CorrelationTypes", "correlation", "correlation_binned",
            "correlation_3d", "correlation_multipole", "correlation_3dRsd",
            "correlation_3dRsd_avgmu", "correlation_pi_sigma",)
 
@@ -128,6 +128,104 @@ def correlation(cosmo, *, ell, C_ell, theta, type='NN', method='fftlog'):
                                           correlation_types[type],
                                           correlation_methods[method],
                                           len(theta), status)
+    check(status, cosmo_in)
+    if scalar:
+        return wth[0]
+    return wth
+
+
+def correlation_binned(cosmo, *, ell, C_ell, theta_min, theta_max, type='NN', method='fftlog'):
+    r"""Compute the angular correlation function.
+
+    .. math::
+
+        \xi^{ab}_\pm(\theta) =
+        \sum_\ell\frac{2\ell+1}{4\pi}\,(\pm1)^{s_b}\,
+        C^{ab\pm}_\ell\,d^\ell_{s_a,\pm s_b}(\theta)
+
+    where :math:`\theta` is the angle between the two fields :math:`a` and
+    :math:`b` with spins :math:`s_a` and :math:`s_b` after alignement of their
+    tangential coordinate. :math:`d^\ell_{mm'}` are the Wigner-d matrices and
+    we have defined the power spectra
+
+    .. math::
+        C^{ab\pm}_\ell \equiv
+        (C^{a_Eb_E}_\ell \pm C^{a_Bb_B}_\ell)+i
+        (C^{a_Bb_E}_\ell \mp C^{a_Eb_B}_\ell),
+
+    which reduces to the :math:`EE` power spectrum when all :math:`B`-modes
+    are 0.
+
+    The different spin combinations are:
+
+        * :math:`s_a=s_b=0` e.g. galaxy-galaxy, galaxy-:math:`\kappa`
+          and :math:`\kappa`-:math:`\kappa`
+        * :math:`s_a=2`, :math:`s_b=0` e.g. galaxy-shear, and :math:`\kappa`-shear
+        * :math:`s_a=s_b=2` e.g. shear-shear.
+
+    .. note::
+        For scales smaller than :math:`\sim 0.1^{\circ}`, the input power
+        spectrum should be sampled to sufficienly high :math:`\ell` to ensure
+        the Hankel transform is well-behaved. The following spline parameters,
+        related to ``FFTLog``-sampling may also be modified for accuracy:
+
+            * ``ccl.spline_params.ELL_MIN_CORR``
+            * ``ccl.spline_params.ELL_MAX_CORR``
+            * ``ccl.spline_params.N_ELL_CORR``.
+
+    Args:
+        cosmo (:class:`~pyccl.cosmology.Cosmology`): A Cosmology object.
+        ell (array): Multipoles corresponding to the input angular power
+                          spectrum.
+        C_ell (array): Input angular power spectrum.
+        theta (:obj:`float` or `array`): Angular separation(s) at which to
+            calculate the angular correlation function (in degrees).
+        type (:obj:`str`): Type of correlation function. Choices: ``'NN'`` (0x0),
+            ``'NG'`` (0x2), ``'GG+'`` (2x2, :math:`\xi_+`),
+            ``'GG-'`` (2x2, :math:`\xi_-`), where numbers refer to the spins
+            of the two quantities being cross-correlated (see Section 2.4.2 of
+            the CCL paper). The naming system roughly follows the nomenclature
+            used in `TreeCorr
+            <https://rmjarvis.github.io/TreeCorr/_build/html/correlation2.html>`_.
+        method (:obj:`str`): Method to compute the correlation function.
+            Choices: ``'Bessel'`` (direct integration over Bessel function),
+            ``'FFTLog'`` (fast integration with FFTLog), ``'Legendre'``
+            (brute-force sum over Legendre polynomials).
+
+    Returns:
+        (:obj:`float` or `array`): Value(s) of the correlation function at the
+        input angular separations.
+    """ # noqa
+    cosmo_in = cosmo
+    cosmo = cosmo.cosmo
+    status = 0
+    method = method.lower()
+
+    if type not in correlation_types:
+        raise ValueError(f"Invalid correlation type {type}.")
+
+    if method not in correlation_methods.keys():
+        raise ValueError(f"Invalid correlation method {method}.")
+
+    # Convert scalar input into an array
+    if scalar := isinstance(theta_min, (int, float)):
+        theta_min = np.array([theta_min, ])
+
+    if scalar := isinstance(theta_max, (int, float)):
+        theta_max = np.array([theta_max, ])
+
+    if theta_max.size != theta_min.size:
+        raise ValueError(f"theta_max and theta_min have different sizes ({theta_max.size} != {theta_min.size})")
+
+    if np.all(np.array(C_ell) == 0):
+        # short-cut and also avoid integration errors
+        wth = np.zeros_like(theta_max)
+    else:
+        # Call correlation function
+        wth, status = lib.correlation_vec_binned(cosmo, ell, C_ell, theta_min, theta_max,
+                                                 correlation_types[type],
+                                                 correlation_methods[method],
+                                                 len(theta_max), status)
     check(status, cosmo_in)
     if scalar:
         return wth[0]

@@ -41,6 +41,12 @@ void ccl_correlation(ccl_cosmology *cosmo,
 		     int corr_type,int do_taper_cl,double *taper_cl_limits,int flag_method,
 		     int *status);
 
+void ccl_correlation_binned(ccl_cosmology *cosmo,
+		     int n_ell,double *ell,double *cls,
+		     int n_theta,double *theta_min,double *theta_max,double *wtheta,
+		     int corr_type,int do_taper_cl,double *taper_cl_limits,int flag_method,
+		     int *status);
+
 /**
  * Computes the 3dcorrelation function (wrapper)
  * @param cosmo :Cosmological parameters
