@@ -135,11 +135,12 @@ def correlation(cosmo, *, ell, C_ell, theta, type='NN', method='fftlog'):
 
 
 def correlation_binned(cosmo, *, ell, C_ell, theta_min, theta_max, type='NN', method='fftlog'):
-    r"""Compute the angular correlation function.
+    r"""Compute the angular correlation function, including angular binning effects
 
     .. math::
 
-        \xi^{ab}_\pm(\theta) =
+        \frac{1}{\theta_{\rm max} - \theta_{\rm min}} 
+        \int_{\theta_{\rm min}}^{\theta_{\rm max}} d\theta 2\pi \theta \xi^{ab}_\pm(\theta) =
         \sum_\ell\frac{2\ell+1}{4\pi}\,(\pm1)^{s_b}\,
         C^{ab\pm}_\ell\,d^\ell_{s_a,\pm s_b}(\theta)
 
@@ -178,8 +179,10 @@ def correlation_binned(cosmo, *, ell, C_ell, theta_min, theta_max, type='NN', me
         ell (array): Multipoles corresponding to the input angular power
                           spectrum.
         C_ell (array): Input angular power spectrum.
-        theta (:obj:`float` or `array`): Angular separation(s) at which to
-            calculate the angular correlation function (in degrees).
+        theta_min (:obj:`float` or `array`): Left edge of  the angular separation bin 
+            at which to calculate the angular correlation function (in degrees).
+        theta_max (:obj:`float` or `array`): Right edge of  the angular separation bin 
+            at which to calculate the angular correlation function (in degrees).
         type (:obj:`str`): Type of correlation function. Choices: ``'NN'`` (0x0),
             ``'NG'`` (0x2), ``'GG+'`` (2x2, :math:`\xi_+`),
             ``'GG-'`` (2x2, :math:`\xi_-`), where numbers refer to the spins

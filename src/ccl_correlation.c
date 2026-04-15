@@ -339,6 +339,7 @@ static void ccl_compute_legendre_polynomial(int corr_type,
 }
 
 
+/* A convenience function for the binning kernels */
 static inline double dpl_from_array(int n, double x, const double *P)
 {
   if (n == 0) {
@@ -354,14 +355,13 @@ static void ccl_compute_legendre_polynomial_binned(int corr_type,
                                                    double *Pl_theta)
 {
   int ell;
-  const double deg2rad = M_PI / 180.0;
   const double eps = 1e-14;
 
   /* x_hi corresponds to the lower angular edge theta_min,
    * x_lo corresponds to the upper angular edge theta_max.
    */
-  double x_hi = cos(theta_min * deg2rad);
-  double x_lo = cos(theta_max * deg2rad);
+  double x_hi = cos(theta_min * M_PI / 180.0);
+  double x_lo = cos(theta_max * M_PI / 180.0);
   double dx = x_hi - x_lo;
 
   double *P_hi = NULL;
@@ -392,7 +392,7 @@ static void ccl_compute_legendre_polynomial_binned(int corr_type,
 
   if (corr_type == CCL_CORR_GG) {
     /* Eq. 20 of https://arxiv.org/abs/2105.13548:
-     * (2 ell + 1) * \bar P_ell =
+     * (2 ell + 1) * \bar{P_ell} =
      *   ([P_{ell+1} - P_{ell-1}]_{x_lo}^{x_hi}) / (x_hi - x_lo)
      */
     Pl_theta[0] = 1.0;
@@ -585,7 +585,11 @@ static void ccl_tracer_corr_legendre(ccl_cosmology *cosmo,
 }
 
 
-
+/*--------ROUTINE: ccl_tracer_corr_legendre_binned ------
+TASK: Compute correlation function via Legendre polynomials, including angular binning
+INPUT: cosmology, number of theta bins, theta array, tracer 1, tracer 2, i_bessel, boolean
+       for tapering, vector of tapering limits, correlation vector, angular_cl function.
+ */
 static void ccl_tracer_corr_legendre_binned(ccl_cosmology *cosmo,
                                      int n_ell,double *ell,double *cls,
                                      int n_theta,double *theta_min,double *theta_max,double *wtheta,
@@ -710,7 +714,13 @@ void ccl_correlation(ccl_cosmology *cosmo,
 }
 
 
-
+/*--------ROUTINE: ccl_correlation_binned ------
+TASK: For a given tracer, get the correlation function. Include angular
+      binning directly in the kernels
+INPUT: cosmology, number of theta values to evaluate = NL, theta vector,
+       tracer 1, tracer 2, i_bessel, key for tapering, limits of tapering
+       correlation function.
+ */
 void ccl_correlation_binned(ccl_cosmology *cosmo,
                      int n_ell,double *ell,double *cls,
                      int n_theta,double *theta_min,double *theta_max,double *wtheta,
